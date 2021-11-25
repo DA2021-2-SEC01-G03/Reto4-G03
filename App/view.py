@@ -5,6 +5,9 @@ import config
 import threading
 from App import controller
 from DISClib.ADT import stack
+from DISClib.ADT import list as lt
+from DISClib.ADT import map as m
+from DISClib.ADT.graph import gr
 assert config
 from timeit import default_timer
 
@@ -20,8 +23,10 @@ operación seleccionada.
 # ___________________________________________________
 
 
-servicefile = 'bus_routes_50.csv'
-initialStation = None
+airportsFile = 'airports_full.csv'
+routesFile = 'routes_full.csv'
+citiesFile = 'worldcities.csv'
+
 
 # ___________________________________________________
 #  Menu principal
@@ -43,35 +48,46 @@ def printMenu():
     print("*******************************************")
 
 
-def optionTwo(cont):
+def optionTwo(analyzer):
     print("\nCargando información de transporte de singapur ....")
-    controller.loadServices(cont, servicefile)
-    numedges = controller.totalConnections(cont)
-    numvertex = controller.totalStops(cont)
-    print('Numero de vertices: ' + str(numvertex))
-    print('Numero de arcos: ' + str(numedges))
-    print('El limite de recursion actual: ' + str(sys.getrecursionlimit()))
+    controller.loadAirports(analyzer, airportsFile)
+    controller.loadAirportsGraphs(analyzer, routesFile)
+    controller.loadCities(analyzer, citiesFile)
+    print("Total aereopuertos grafo dirigido: " + str(gr.numVertices(analyzer['Directed airports'])))
+    print("Total rutas aereas grafo dirigido: " + str(gr.numEdges(analyzer['Directed airports'])))
+    print("Total aereopuertos grafo no dirigido: " + str(gr.numVertices(analyzer['No Directed airports'])))
+    print("Total rutas aereas grafo no dirigido: " + str(gr.numEdges(analyzer['No Directed airports'])))
+    print("")
+    print("Primer aereopuerto grafo dirigido: ")
+    print(str(lt.firstElement(gr.vertices(analyzer['Directed airports']))))
+    print("")
+    print("Primer aereopuerto grafo no dirigido: ")
+    print(str(lt.firstElement(gr.vertices(analyzer['No Directed airports']))))
+    print("")
+    print("Total de ciudades cargadas: " + str(m.size(analyzer['cities'])))
+    print("La ultima ciudad cargada fue: " + str(lt.firstElement(m.valueSet(analyzer['cities']))))
+    
 
 
-def optionThree(cont):
+def optionThree(analyzer):
     print('El número de componentes conectados es: ' +
-          str(controller.connectedComponents(cont)))
+          str(controller.connectedComponents(analyzer)))
 
 
-def optionFour(cont, initialStation):
-    controller.minimumCostPaths(cont, initialStation)
+def optionFour(analyzer, initialStation):
+    controller.minimumCostPaths(analyzer, initialStation)
 
 
-def optionFive(cont, destStation):
-    haspath = controller.hasPath(cont, destStation)
+def optionFive(analyzer, destStation):
+    haspath = controller.hasPath(analyzer, destStation)
     print('Hay camino entre la estación base : ' +
           'y la estación: ' + destStation + ': ')
     print(haspath)
 
 
-def optionSix(cont, destStation):
+def optionSix(analyzer, destStation):
     inicio = default_timer()
-    path = controller.minimumCostPath(cont, destStation)
+    path = controller.minimumCostPath(analyzer, destStation)
     if path is not None:
         pathlen = stack.size(path)
         print('El camino es de longitud: ' + str(pathlen))
@@ -85,8 +101,8 @@ def optionSix(cont, destStation):
     print("Tiempo de ejecución: " + str(fin -  inicio))   
 
 
-def optionSeven(cont):
-    maxvert, maxdeg = controller.servedRoutes(cont)
+def optionSeven(analyzer):
+    maxvert, maxdeg = controller.servedRoutes(analyzer)
     print('Estación: ' + maxvert + '  Total rutas servidas: '
           + str(maxdeg))
 
@@ -103,33 +119,33 @@ def thread_cycle():
 
         if int(inputs[0]) == 1:
             print("\nInicializando....")
-            # cont es el controlador que se usará de acá en adelante
-            cont = controller.init()
+            # analyzer es el controlador que se usará de acá en adelante
+            analyzer = controller.init()
 
         elif int(inputs[0]) == 2:
-            optionTwo(cont)
+            optionTwo(analyzer)
 
         elif int(inputs[0]) == 3:
-            optionThree(cont)
+            optionThree(analyzer)
 
         elif int(inputs[0]) == 4:
             msg = "Estación Base: BusStopCode-ServiceNo (Ej: 75009-10): "
             initialStation = input(msg)
             inicio = default_timer()
-            optionFour(cont, initialStation)
+            optionFour(analyzer, initialStation)
             fin = default_timer()
             print("Tiempo de ejecución: " + str(fin -  inicio))
 
         elif int(inputs[0]) == 5:
             destStation = input("Estación destino (Ej: 15151-10): ")
-            optionFive(cont, destStation)
+            optionFive(analyzer, destStation)
 
         elif int(inputs[0]) == 6:
             destStation = input("Estación destino (Ej: 15151-10): ")
-            optionSix(cont, destStation)
+            optionSix(analyzer, destStation)
 
         elif int(inputs[0]) == 7:
-            optionSeven(cont)
+            optionSeven(analyzer)
 
         else:
             sys.exit(0)

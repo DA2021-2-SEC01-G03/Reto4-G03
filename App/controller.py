@@ -1,5 +1,6 @@
 ﻿
 import config as cf
+from DISClib.ADT import map as m
 from App import model
 import csv
 
@@ -30,29 +31,40 @@ def init():
 #  de datos en los modelos
 # ___________________________________________________
 
-
-def loadServices(analyzer, servicesfile):
-    """
-    Carga los datos de los archivos CSV en el modelo.
-    Se crea un arco entre cada par de estaciones que
-    pertenecen al mismo servicio y van en el mismo sentido.
-
-    addRouteConnection crea conexiones entre diferentes rutas
-    servidas en una misma estación.
-    """
-    servicesfile = cf.data_dir + servicesfile
-    input_file = csv.DictReader(open(servicesfile, encoding="utf-8"),
+def loadCities(analyzer, citiesFile):
+    citiesFile = cf.data_dir + citiesFile
+    input_file = csv.DictReader(open(citiesFile, encoding="utf-8"),
                                 delimiter=",")
-    lastservice = None
-    for service in input_file:
-        if lastservice is not None:
-            sameservice = lastservice['ServiceNo'] == service['ServiceNo']
-            samedirection = lastservice['Direction'] == service['Direction']
-            samebusStop = lastservice['BusStopCode'] == service['BusStopCode']
-            if sameservice and samedirection and not samebusStop:
-                model.addStopConnection(analyzer, lastservice, service)
-        lastservice = service
-    model.addRouteConnections(analyzer)
+    for city in input_file:
+        model.addCity(analyzer, city)
+        
+    return analyzer
+
+
+def loadAirports(analyzer, airportsFile):
+
+    airportsFile = cf.data_dir + airportsFile
+    input_file = csv.DictReader(open(airportsFile, encoding="utf-8"),
+                                delimiter=",")
+    for airport in input_file:
+        model.addAirport(analyzer, airport)
+        
+    return analyzer
+
+
+def loadAirportsGraphs(analyzer, routesFile):
+
+    routesFile = cf.data_dir + routesFile
+    input_file = csv.DictReader(open(routesFile, encoding="utf-8"),
+                                delimiter=",")
+    for route in input_file:
+        departure = route['Departure']
+        departureVertex = m.get(analyzer['airports'], departure)['value']
+        destination = route['Destination']
+        destinationVertex = m.get(analyzer['airports'], destination)['value']
+        distance = route['distance_km']
+        model.addAirportsConnection(analyzer, departureVertex, destinationVertex, distance)
+
     return analyzer
 
 # ___________________________________________________
