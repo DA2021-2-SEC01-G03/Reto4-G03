@@ -74,6 +74,9 @@ def loadAirportsGraphs(analyzer, routesFile):
 def mostConnectedAirports(analyzer):
     return model.mostConnectedAirports(analyzer)
 
+def cantidadClusteres(iata1, iata2, analyzer):
+    return model.cantidadClusteres(iata1, iata2, analyzer)
+
 # ___________________________________________________
 #  Funciones para ordenar
 # ___________________________________________________

@@ -90,14 +90,22 @@ def mostConnectedAirports(analyzer):
     airportsGraph = analyzer['Directed airports']
     airportsList = gr.vertices(airportsGraph)
     finalList = lt.newList('ARRAY_LIST')
+    TotalAirports = gr.numVertices(airportsGraph)
     for airport in lt.iterator(airportsList):
         numDestinations = gr.outdegree(airportsGraph, airport)
-        airportNumDestinations = {'airport': airport, 'numConnections': numDestinations}
+        numDestinations2 = gr.indegree(airportsGraph, airport)
+        airportNumDestinations = {'airport': airport, 'numConnections': numDestinations + numDestinations2, 'outBound': numDestinations, 'inBound': numDestinations2}
         lt.addLast(finalList, airportNumDestinations)
 
-    return finalList    
+    return finalList, TotalAirports
 
-
+def cantidadClusteres(iata1, iata2, analyzer):
+    scc1= scc.KosarajuSCC(analyzer['Directed airports'])
+    clusteresTotales = scc.connectedComponents(scc1)
+    confirmIatas = scc.stronglyConnected(scc1, iata1, iata2)
+    
+    return clusteresTotales, confirmIatas
+#
 
 def minimumCostPaths(analyzer, initialStation):
 

@@ -23,9 +23,9 @@ operación seleccionada.
 # ___________________________________________________
 
 
-airportsFile = 'airports_full.csv'
-routesFile = 'routes_full.csv'
-citiesFile = 'worldcities.csv'
+airportsFile = 'airports-utf8-large.csv'
+routesFile = 'routes-utf8-large.csv'
+citiesFile = 'worldcities-utf8.csv'
 
 
 # ___________________________________________________
@@ -53,19 +53,27 @@ def optionTwo(analyzer):
     controller.loadAirports(analyzer, airportsFile)
     controller.loadAirportsGraphs(analyzer, routesFile)
     controller.loadCities(analyzer, citiesFile)
-    print("Total aereopuertos grafo dirigido: " + str(gr.numVertices(analyzer['Directed airports'])))
+    print("Digrafo de aeropuertos: " )
+    print("Total aeropuertos grafo dirigido: " + str(gr.numVertices(analyzer['Directed airports'])))
     print("Total rutas aereas grafo dirigido: " + str(gr.numEdges(analyzer['Directed airports'])))
-    print("Total aereopuertos grafo no dirigido: " + str(gr.numVertices(analyzer['No Directed airports'])))
-    print("Total rutas aereas grafo no dirigido: " + str(gr.numEdges(analyzer['No Directed airports'])))
-    print("")
-    print("Primer aereopuerto grafo dirigido: ")
+    print("Primer aeropuerto grafo dirigido: ")
     print(str(lt.firstElement(gr.vertices(analyzer['Directed airports']))))
+    print("último aeropuerto grafo dirigido: ")
+    print(str(lt.lastElement(gr.vertices(analyzer['Directed airports']))))
     print("")
-    print("Primer aereopuerto grafo no dirigido: ")
-    print(str(lt.firstElement(gr.vertices(analyzer['No Directed airports']))))
+    print("Digrafo de aeropuertos: " )
+    print("Total aeropuertos grafo no dirigido: " + str(gr.numVertices(analyzer['No Directed airports'])))
+    print("Total rutas aereas grafo no dirigido: " + str(gr.numEdges(analyzer['No Directed airports'])))
+    print("Primer aeropuerto grafo no dirigido: ")
+    print(str(lt.firstElement(gr.vertices(analyzer['Directed airports']))))
+    print("último aeropuerto grafo no dirigido: ")
+    print(str(lt.lastElement(gr.vertices(analyzer['No Directed airports']))))
     print("")
+    print("Red de ciudades: ")
     print("Total de ciudades cargadas: " + str(m.size(analyzer['cities'])))
-    print("La ultima ciudad cargada fue: " + str(lt.firstElement(m.valueSet(analyzer['cities']))))
+    print("La primera ciudad cargada fue: " + str(lt.lastElement(m.valueSet(analyzer['cities']))))
+    print("La última ciudad cargada fue: " + str(lt.firstElement(m.valueSet(analyzer['cities']))))
+    
     
 
 
@@ -76,10 +84,17 @@ def optionThree(analyzer):
     top5MostConnectedAirports = lt.subList(orderedList, 1, 5)
     for airport in lt.iterator(top5MostConnectedAirports):
         print("Aereopuerto: " +  str(airport['airport']) + "Aereopuertos conectados: " + str(airport['numConnections']))
+#
 
-
-def optionFour(analyzer, initialStation):
-    controller.minimumCostPaths(analyzer, initialStation)
+def optionFour(iata1, iata2, analyzer):
+    clusteresTotales = controller.cantidadClusteres(iata1,iata2,analyzer)[0]
+    confirmIatas = controller.cantidadClusteres(iata1,iata2,analyzer) [1]
+    
+    print("Número de SCC en red de aeropuertos: ")
+    print(clusteresTotales)
+    print("")
+    print("Están los aeropuertos 1 y 2 con codigo Iata " + str(iata1) + " y " + str(iata2) + " en el mismo cluster: ")
+    print(confirmIatas)
 
 
 def optionFive(analyzer, destStation):
@@ -133,12 +148,11 @@ def thread_cycle():
             optionThree(analyzer)
 
         elif int(inputs[0]) == 4:
-            msg = "Estación Base: BusStopCode-ServiceNo (Ej: 75009-10): "
-            initialStation = input(msg)
-            inicio = default_timer()
-            optionFour(analyzer, initialStation)
-            fin = default_timer()
-            print("Tiempo de ejecución: " + str(fin -  inicio))
+            iata1 = input("ingrese código Iata del aeropuerto 1: ")
+            iata2 = input("ingrese código Iata del aeropuerto 2: ")
+            optionFour(iata1,iata2 ,analyzer)
+            
+           
 
         elif int(inputs[0]) == 5:
             destStation = input("Estación destino (Ej: 15151-10): ")
