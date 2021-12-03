@@ -3,6 +3,7 @@ import config
 from DISClib.ADT.graph import gr
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
+from DISClib.Algorithms.Sorting import mergesort as ms
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Utils import error as error
@@ -14,7 +15,7 @@ de creacion y consulta sobre las estructuras de datos.
 """
 
 # -----------------------------------------------------
-#                       API
+#                       ANALYZER
 # -----------------------------------------------------
 
 
@@ -62,7 +63,7 @@ def addCity(analyzer, city):
 def addAirport(analyzer, airport):
     airports = analyzer['airports']
     iso = airport['IATA']
-    m.put(airports, iso, str(airport))
+    m.put(airports, iso, airport['IATA'])
 
 
 def addAirportsConnection(analyzer, departure, destination, distance):
@@ -85,20 +86,21 @@ def addAirportsConnection(analyzer, departure, destination, distance):
 # ==============================
 
 
-def connectedComponents(analyzer):
-    """
-    Calcula los componentes conectados del grafo
-    Se utiliza el algoritmo de Kosaraju
-    """
-    analyzer['components'] = scc.KosarajuSCC(analyzer['connections'])
-    return scc.connectedComponents(analyzer['components'])
+def mostConnectedAirports(analyzer):
+    airportsGraph = analyzer['Directed airports']
+    airportsList = gr.vertices(airportsGraph)
+    finalList = lt.newList('ARRAY_LIST')
+    for airport in lt.iterator(airportsList):
+        numDestinations = gr.outdegree(airportsGraph, airport)
+        airportNumDestinations = {'airport': airport, 'numConnections': numDestinations}
+        lt.addLast(finalList, airportNumDestinations)
+
+    return finalList    
+
 
 
 def minimumCostPaths(analyzer, initialStation):
-    """
-    Calcula los caminos de costo mínimo desde la estacion initialStation
-    a todos los demas vertices del grafo
-    """
+
     analyzer['paths'] = djk.Dijkstra(analyzer['connections'], initialStation)
     return analyzer
 
@@ -177,6 +179,14 @@ def formatVertex(service):
     name = name + service['ServiceNo']
     return name
 
+# ==============================
+# Funciones de Ordenamiento
+# ==============================
+
+def sortAirportsConnections(list):
+    return ms.sort(list, compareConnections)
+
+
 
 # ==============================
 # Funciones de Comparacion
@@ -187,10 +197,10 @@ def compareAirports(airport, keyvalueairport):
     """
     Compara dos estaciones
     """
-    airportcode = keyvalueairport['key']
-    if (airport == airportcode):
+    airportcode = str(keyvalueairport['key'])
+    if (str(airport) == airportcode):
         return 0
-    elif (airport > airportcode):
+    elif (str(airport) > airportcode):
         return 1
     else:
         return -1
@@ -205,3 +215,5 @@ def compareroutes(route1, route2):
         return 1
     else:
         return -1
+def compareConnections(airportNumConnections1, airportNumConnections2):
+    return airportNumConnections1['numConnections'] > airportNumConnections2['numConnections']     

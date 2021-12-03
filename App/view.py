@@ -1,5 +1,5 @@
 ﻿
-
+import json
 import sys
 import config
 import threading
@@ -70,8 +70,12 @@ def optionTwo(analyzer):
 
 
 def optionThree(analyzer):
-    print('El número de componentes conectados es: ' +
-          str(controller.connectedComponents(analyzer)))
+    listAirportsConnections = controller.mostConnectedAirports(analyzer)
+    orderedList = controller.sortAirportsConnections(listAirportsConnections)
+    print("Los aereopuertos mas interconectados son: ")
+    top5MostConnectedAirports = lt.subList(orderedList, 1, 5)
+    for airport in lt.iterator(top5MostConnectedAirports):
+        print("Aereopuerto: " +  str(airport['airport']) + "Aereopuertos conectados: " + str(airport['numConnections']))
 
 
 def optionFour(analyzer, initialStation):
