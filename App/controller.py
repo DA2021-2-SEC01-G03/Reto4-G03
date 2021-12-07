@@ -62,7 +62,7 @@ def loadAirportsGraphs(analyzer, routesFile):
         departureVertex = m.get(analyzer['airports'], departure)['value']
         destination = route['Destination']
         destinationVertex = m.get(analyzer['airports'], destination)['value']
-        distance = route['distance_km']
+        distance = float(route['distance_km'])
         model.addAirportsConnection(analyzer, departureVertex, destinationVertex, distance)
 
     return analyzer
@@ -77,9 +77,24 @@ def mostConnectedAirports(analyzer):
 def cantidadClusteres(iata1, iata2, analyzer):
     return model.cantidadClusteres(iata1, iata2, analyzer)
 
+def mapCiudades(analyzer):
+    return model.mapCiudades(analyzer)   
+
+def rutaMasCorta(ciudad1, ciudad2, analyzer):
+    return model.rutaMasCorta(ciudad1, ciudad2, analyzer)   
+
+def millasViajero(analyzer, ciudadOrigen):
+    return model.millasViajero(analyzer, ciudadOrigen)  
+
+def aeropuertosAfectados(analyzer, aeropuertoEliminado):
+    return model.aeropuertosAfectados(analyzer, aeropuertoEliminado)       
+
 # ___________________________________________________
 #  Funciones para ordenar
 # ___________________________________________________
 
 def sortAirportsConnections(list):
     return model.sortAirportsConnections(list)
+
+def ac(latitudCiudad, longitudCiudad, analyzer):
+    return model.aerepuertosCercanos(latitudCiudad, longitudCiudad, analyzer)    

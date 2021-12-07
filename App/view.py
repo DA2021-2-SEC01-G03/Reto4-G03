@@ -61,8 +61,8 @@ def optionTwo(analyzer):
     print("último aeropuerto grafo dirigido: ")
     print(str(lt.lastElement(gr.vertices(analyzer['Directed airports']))))
     print("")
-    print("Digrafo de aeropuertos: " )
-    print("Total aeropuertos grafo no dirigido: " + str(gr.numVertices(analyzer['No Directed airports'])))
+    print("Grafo no dirigido de aeropuertos: " )
+    print("Total aeropuertos grafo no dirigido: " +str(gr.numVertices(analyzer['No Directed airports'])))
     print("Total rutas aereas grafo no dirigido: " + str(gr.numEdges(analyzer['No Directed airports'])))
     print("Primer aeropuerto grafo no dirigido: ")
     print(str(lt.firstElement(gr.vertices(analyzer['Directed airports']))))
@@ -97,33 +97,40 @@ def optionFour(iata1, iata2, analyzer):
     print(confirmIatas)
 
 
-def optionFive(analyzer, destStation):
-    haspath = controller.hasPath(analyzer, destStation)
-    print('Hay camino entre la estación base : ' +
-          'y la estación: ' + destStation + ': ')
-    print(haspath)
+def optionFive(ciudad1, ciudad2, analyzer):
+
+    aeropuertoOrigen = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[0]
+    aeropuertoDestino = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[1]
+    ruta = aeropuertoOrigen = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[2]
+    rutaTotal = aeropuertoOrigen = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[3]
+
+    print("Aeropueto de origen: " + str(aeropuertoOrigen))
+    print("Aeropuerto de destino: " + str(aeropuertoDestino))
+    print("Distancia entre aeropuertos: " + str(ruta))
+    print("Distancia entre ciudades: " + str(rutaTotal))
 
 
-def optionSix(analyzer, destStation):
-    inicio = default_timer()
-    path = controller.minimumCostPath(analyzer, destStation)
-    if path is not None:
-        pathlen = stack.size(path)
-        print('El camino es de longitud: ' + str(pathlen))
-        while (not stack.isEmpty(path)):
-            stop = stack.pop(path)
-            print(stop)
-    else:
-        print('No hay camino')
-
-    fin = default_timer()
-    print("Tiempo de ejecución: " + str(fin -  inicio))   
 
 
-def optionSeven(analyzer):
-    maxvert, maxdeg = controller.servedRoutes(analyzer)
-    print('Estación: ' + maxvert + '  Total rutas servidas: '
-          + str(maxdeg))
+
+
+
+def optionSix(analyzer, ciudadOrigen):
+    print(controller.millasViajero(analyzer, ciudadOrigen)) 
+
+
+def optionSeven(analyzer, aeropuertoEliminado):
+    aeropuertosDigrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[0]
+    rutasDigrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[1]
+
+    aeropuertosGrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[2]
+    rutasGrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[3]
+
+    print("Numero de aeropuertos resultantes del digrafo: " + str(aeropuertosDigrafo))
+    print("Numero de rutas resultantes del digrafo: " + str(rutasDigrafo))
+    print("")
+    print("Numero de aeropuertos resultantes del grafo: " + str(aeropuertosGrafo))
+    print("Numero de rutas resultantes del grafo: " + str(rutasGrafo))
 
 
 """
@@ -155,16 +162,26 @@ def thread_cycle():
            
 
         elif int(inputs[0]) == 5:
-            destStation = input("Estación destino (Ej: 15151-10): ")
-            optionFive(analyzer, destStation)
+            mapCiudades = controller.mapCiudades(analyzer)
+            ciudad1 = input("Ingrese el nombre de la ciudad de origen")
+            ciudadCorrecta1 = ciudadElegida(ciudad1, mapCiudades, analyzer)
+            ciudad2 = input("Ingrese el nombre de la ciudad de destino")
+            ciudadCorrecta2 = ciudadElegida(ciudad2, mapCiudades, analyzer)
+            optionFive(ciudadCorrecta1, ciudadCorrecta2, analyzer)
 
         elif int(inputs[0]) == 6:
-            destStation = input("Estación destino (Ej: 15151-10): ")
-            optionSix(analyzer, destStation)
+            ciudadOrigen = input("Ingrese ciudad de origen: ")
+            optionSix(analyzer, ciudadOrigen)
 
         elif int(inputs[0]) == 7:
-            optionSeven(analyzer)
+            aeropuertoEliminado = input("Codigo iata aeropuerto eliminado: ")
+            optionSeven(analyzer, aeropuertoEliminado)
 
+
+        elif int(inputs[0]) == 8:
+            longitudCiudad = float(input("Longitud ciudad: "))
+            latitudCiudad = float(input("Latitud ciudad: "))
+            print(controller.ac(latitudCiudad, longitudCiudad, analyzer))
         else:
             sys.exit(0)
     sys.exit(0)
@@ -175,3 +192,22 @@ if __name__ == "__main__":
     sys.setrecursionlimit(2 ** 20)
     thread = threading.Thread(target=thread_cycle)
     thread.start()
+
+#Auxiliar
+
+def ciudadElegida(ciudad1, mapCiudades, analyzer):
+    ciudades = analyzer['cities']
+    bucket = m.get(mapCiudades, ciudad1)['value']
+    if lt.size(bucket) > 1:
+        print("Hay más de una ciudad con el mismo nombre, escoger una entre las siguientes ")
+        i = 1
+        for ciudad in lt.iterator(bucket):
+            print("Opcion " + str(i) + "- " + str(ciudad))
+            i += 1
+        opcionElegida = int(input("Elija una opcion"))
+        ciudad1Correcta = lt.getElement(bucket, opcionElegida)['id']
+    elif lt.size(bucket) == 1:
+        ciudad1Correcta = lt.getElement(bucket, 1)['id']
+ 
+    return ciudad1Correcta 
+
