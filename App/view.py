@@ -1,15 +1,14 @@
 ﻿
-import json
+
 import sys
 import config
 import threading
 from App import controller
-from DISClib.ADT import stack
+from DISClib.Utils import error as error
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as m
-from DISClib.ADT.graph import gr
+from DISClib.ADT.graph import gr, numEdges
 assert config
-from timeit import default_timer
 
 """
 La vista se encarga de la interacción con el usuario.
@@ -23,8 +22,8 @@ operación seleccionada.
 # ___________________________________________________
 
 
-airportsFile = 'airports-utf8-large.csv'
-routesFile = 'routes-utf8-large.csv'
+airportsFile = 'airports-utf8-small.csv'
+routesFile = 'routes-utf8-small.csv'
 citiesFile = 'worldcities-utf8.csv'
 
 
@@ -53,6 +52,7 @@ def optionTwo(analyzer):
     controller.loadAirports(analyzer, airportsFile)
     controller.loadAirportsGraphs(analyzer, routesFile)
     controller.loadCities(analyzer, citiesFile)
+    controller.loadNoConnectedAirports(analyzer)
     print("Digrafo de aeropuertos: " )
     print("Total aeropuertos grafo dirigido: " + str(gr.numVertices(analyzer['Directed airports'])))
     print("Total rutas aereas grafo dirigido: " + str(gr.numEdges(analyzer['Directed airports'])))
@@ -78,40 +78,45 @@ def optionTwo(analyzer):
 
 
 def optionThree(analyzer):
-    listAirportsConnections = controller.mostConnectedAirports(analyzer)
+    listAirportsConnections = controller.mostConnectedAirports(analyzer)[0]
     orderedList = controller.sortAirportsConnections(listAirportsConnections)
+    print("Aeropuertos conectados dentro de la red: " + str(analyzer['Aeropuertos conectados digrafo']))
     print("Los aereopuertos mas interconectados son: ")
     top5MostConnectedAirports = lt.subList(orderedList, 1, 5)
     for airport in lt.iterator(top5MostConnectedAirports):
-        print("Aereopuerto: " +  str(airport['airport']) + "Aereopuertos conectados: " + str(airport['numConnections']))
+        print("Aereopuerto: " +  str(airport['airport']) + ", Conexiones: " + str(airport['numConnections']))
 #
 
 def optionFour(iata1, iata2, analyzer):
     clusteresTotales = controller.cantidadClusteres(iata1,iata2,analyzer)[0]
     confirmIatas = controller.cantidadClusteres(iata1,iata2,analyzer) [1]
-    
-    print("Número de SCC en red de aeropuertos: ")
-    print(clusteresTotales)
+    print("")
+    print("Número de SCC en red de aeropuertos: " + str(clusteresTotales))
     print("")
     print("Están los aeropuertos 1 y 2 con codigo Iata " + str(iata1) + " y " + str(iata2) + " en el mismo cluster: ")
-    print(confirmIatas)
+    print("Respuesta: " + str(confirmIatas))
 
 
 def optionFive(ciudad1, ciudad2, analyzer):
-
     aeropuertoOrigen = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[0]
     aeropuertoDestino = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[1]
-    ruta = aeropuertoOrigen = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[2]
-    rutaTotal = aeropuertoOrigen = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[3]
 
-    print("Aeropueto de origen: " + str(aeropuertoOrigen))
-    print("Aeropuerto de destino: " + str(aeropuertoDestino))
-    print("Distancia entre aeropuertos: " + str(ruta))
-    print("Distancia entre ciudades: " + str(rutaTotal))
+    ruta = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[2]
+    camino = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[3]
+    paradas = controller.rutaMasCorta(ciudad1, ciudad2, analyzer)[4]
 
-
-
-
+    print("El aeropueto de origen es " + str(aeropuertoOrigen))
+    print("El aeropuerto de destino es " + str(aeropuertoDestino))
+    print("Distancia total: " + str(ruta))
+    print("")
+    print("Camino del viaje: ")
+    for viaje in lt.iterator(camino):
+        print('Origen: ' + str(viaje['vertexA']) + ', Destino: ' + str(viaje['vertexB']) + ', Distancia_km: ' + str(viaje['weight']))
+    print("")
+    print("Paradas del viaje")
+    print(str(aeropuertoOrigen))
+    for parada in lt.iterator(paradas):
+        print(parada)
 
 
 
@@ -122,16 +127,18 @@ def optionSix(analyzer, ciudadOrigen):
 def optionSeven(analyzer, aeropuertoEliminado):
     aeropuertosDigrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[0]
     rutasDigrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[1]
-
     aeropuertosGrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[2]
     rutasGrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[3]
+    listaAfectados = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[4]
 
-    print("Numero de aeropuertos resultantes del digrafo: " + str(aeropuertosDigrafo))
-    print("Numero de rutas resultantes del digrafo: " + str(rutasDigrafo))
+    print("Numero de aeropuertos Digrafo original: " + str(gr.numVertices(analyzer['Directed airports'])) + ', rutas: ' + str(gr.numEdges(analyzer['Directed airports'])))
+    print("Numero de aeropuertos grafo original: " + str(gr.numVertices(analyzer['No Directed airports'])) + ', rutas: ' + str(gr.numEdges(analyzer['No Directed airports'])))
     print("")
-    print("Numero de aeropuertos resultantes del grafo: " + str(aeropuertosGrafo))
-    print("Numero de rutas resultantes del grafo: " + str(rutasGrafo))
-
+    print("Numero de aeropuertos resultantes del digrafo: " + str(aeropuertosDigrafo) + ", rutas: " + str(rutasDigrafo))
+    print("Numero de aeropuertos resultantes del grafo: " + str(aeropuertosGrafo) + ", rutas: " + str(rutasGrafo) )
+    print("Aeropuertos afectados")
+    for aeropuerto in lt.iterator(listaAfectados):
+        print(aeropuerto)
 
 """
 Menu principal
@@ -163,11 +170,10 @@ def thread_cycle():
 
         elif int(inputs[0]) == 5:
             mapCiudades = controller.mapCiudades(analyzer)
-            ciudad1 = input("Ingrese el nombre de la ciudad de origen")
-            ciudadCorrecta1 = ciudadElegida(ciudad1, mapCiudades, analyzer)
-            ciudad2 = input("Ingrese el nombre de la ciudad de destino")
-            ciudadCorrecta2 = ciudadElegida(ciudad2, mapCiudades, analyzer)
-            optionFive(ciudadCorrecta1, ciudadCorrecta2, analyzer)
+            ciudadCorrectaOrigen = ciudadElegida(mapCiudades, "origen")
+            ciudadCorrectaDestino = ciudadElegida(mapCiudades, "destino")
+            optionFive(ciudadCorrectaOrigen, ciudadCorrectaDestino, analyzer)
+            
 
         elif int(inputs[0]) == 6:
             ciudadOrigen = input("Ingrese ciudad de origen: ")
@@ -195,9 +201,17 @@ if __name__ == "__main__":
 
 #Auxiliar
 
-def ciudadElegida(ciudad1, mapCiudades, analyzer):
-    ciudades = analyzer['cities']
-    bucket = m.get(mapCiudades, ciudad1)['value']
+def ciudadElegida(mapCiudades, tipoCiudad):
+    ciudadCargada = False
+    while ciudadCargada == False:
+     ciudad = input("Ingrese el nombre de la ciudad de " + str(tipoCiudad) + ": ")
+     llaveCiudad = m.get(mapCiudades, ciudad)    
+     if llaveCiudad == None:
+        print('La ciudad elegida no existe en las ciudades cargadas')
+     else:
+        ciudadCargada = True   
+
+    bucket = llaveCiudad['value']    
     if lt.size(bucket) > 1:
         print("Hay más de una ciudad con el mismo nombre, escoger una entre las siguientes ")
         i = 1
