@@ -22,8 +22,8 @@ operación seleccionada.
 # ___________________________________________________
 
 
-airportsFile = 'airports-utf8-small.csv'
-routesFile = 'routes-utf8-small.csv'
+airportsFile = 'airports-utf8-large.csv'
+routesFile = 'routes-utf8-large.csv'
 citiesFile = 'worldcities-utf8.csv'
 
 
@@ -50,20 +50,23 @@ def printMenu():
 def optionTwo(analyzer):
     print("\nCargando información de transporte de singapur ....")
     controller.loadAirports(analyzer, airportsFile)
-    controller.loadAirportsGraphs(analyzer, routesFile)
+    controller.loadAirportsDigraph(analyzer, routesFile)
+    controller.loadAirportsGraph(analyzer, routesFile)
     controller.loadCities(analyzer, citiesFile)
     controller.loadNoConnectedAirports(analyzer)
     print("Digrafo de aeropuertos: " )
     print("Total aeropuertos grafo dirigido: " + str(gr.numVertices(analyzer['Directed airports'])))
-    print("Total rutas aereas grafo dirigido: " + str(gr.numEdges(analyzer['Directed airports'])))
+    print("Total rutas aereas grafo dirigido: " + str(analyzer['Rutas cargadas digrafo']))
+    print("Vertices: " + str(gr.numVertices(analyzer['Directed airports'])) + ", Arcos: " + str(gr.numEdges(analyzer['Directed airports'])))
     print("Primer aeropuerto grafo dirigido: ")
     print(str(lt.firstElement(gr.vertices(analyzer['Directed airports']))))
     print("último aeropuerto grafo dirigido: ")
     print(str(lt.lastElement(gr.vertices(analyzer['Directed airports']))))
     print("")
     print("Grafo no dirigido de aeropuertos: " )
-    print("Total aeropuertos grafo no dirigido: " +str(gr.numVertices(analyzer['No Directed airports'])))
-    print("Total rutas aereas grafo no dirigido: " + str(gr.numEdges(analyzer['No Directed airports'])))
+    print("Total aeropuertos grafo no dirigido: " + str(gr.numVertices(analyzer['No Directed airports'])))
+    print("Total rutas aereas cargadas del grafo no dirigido: " + str(analyzer['Rutas cargadas grafo']))
+    print("Vertices: " + str(gr.numVertices(analyzer['No Directed airports'])) + ", Arcos: " + str(gr.numEdges(analyzer['No Directed airports'])))    
     print("Primer aeropuerto grafo no dirigido: ")
     print(str(lt.firstElement(gr.vertices(analyzer['Directed airports']))))
     print("último aeropuerto grafo no dirigido: ")
@@ -119,7 +122,6 @@ def optionFive(ciudad1, ciudad2, analyzer):
         print(parada)
 
 
-
 def optionSix(analyzer, ciudadOrigen):
     print(controller.millasViajero(analyzer, ciudadOrigen)) 
 
@@ -131,14 +133,15 @@ def optionSeven(analyzer, aeropuertoEliminado):
     rutasGrafo = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[3]
     listaAfectados = controller.aeropuertosAfectados(analyzer, aeropuertoEliminado)[4]
 
-    print("Numero de aeropuertos Digrafo original: " + str(gr.numVertices(analyzer['Directed airports'])) + ', rutas: ' + str(gr.numEdges(analyzer['Directed airports'])))
-    print("Numero de aeropuertos grafo original: " + str(gr.numVertices(analyzer['No Directed airports'])) + ', rutas: ' + str(gr.numEdges(analyzer['No Directed airports'])))
+    print("Numero de aeropuertos Digrafo original: " + str(gr.numVertices(analyzer['Directed airports'])) + ', rutas: ' + str(analyzer['Rutas cargadas digrafo']))
+    print("Numero de aeropuertos grafo original: " + str(gr.numVertices(analyzer['No Directed airports'])) + ', rutas: ' + str(analyzer['Rutas cargadas grafo']))
     print("")
     print("Numero de aeropuertos resultantes del digrafo: " + str(aeropuertosDigrafo) + ", rutas: " + str(rutasDigrafo))
     print("Numero de aeropuertos resultantes del grafo: " + str(aeropuertosGrafo) + ", rutas: " + str(rutasGrafo) )
     print("Aeropuertos afectados")
     for aeropuerto in lt.iterator(listaAfectados):
         print(aeropuerto)
+
 
 """
 Menu principal
@@ -185,9 +188,8 @@ def thread_cycle():
 
 
         elif int(inputs[0]) == 8:
-            longitudCiudad = float(input("Longitud ciudad: "))
-            latitudCiudad = float(input("Latitud ciudad: "))
-            print(controller.ac(latitudCiudad, longitudCiudad, analyzer))
+          listaEdges = gr.edges(analyzer['No Directed airports'])
+          print(listaEdges[0])
         else:
             sys.exit(0)
     sys.exit(0)
@@ -199,7 +201,9 @@ if __name__ == "__main__":
     thread = threading.Thread(target=thread_cycle)
     thread.start()
 
-#Auxiliar
+# ====================
+# Funciones axiliares 
+# ====================
 
 def ciudadElegida(mapCiudades, tipoCiudad):
     ciudadCargada = False
@@ -218,7 +222,7 @@ def ciudadElegida(mapCiudades, tipoCiudad):
         for ciudad in lt.iterator(bucket):
             print("Opcion " + str(i) + "- " + str(ciudad))
             i += 1
-        opcionElegida = int(input("Elija una opcion"))
+        opcionElegida = int(input("Elija una opcion "))
         ciudad1Correcta = lt.getElement(bucket, opcionElegida)['id']
     elif lt.size(bucket) == 1:
         ciudad1Correcta = lt.getElement(bucket, 1)['id']

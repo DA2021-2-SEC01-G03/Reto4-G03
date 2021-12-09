@@ -1,7 +1,7 @@
 ﻿
 from DISClib.DataStructures.arraylist import addLast
 import config
-from DISClib.ADT.graph import gr
+from DISClib.ADT.graph import getEdge, gr
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
 from DISClib.ADT import stack as st
@@ -28,8 +28,11 @@ def newAnalyzer():
                     'airports': None,
                     'Directed airports': None,
                     'No Directed airports': None,
+                    'Tabla rutas': None,
                     'Aeropuertos conectados digrafo': None,
-                    'Aeropuertos conectados grafo': None
+                    'Aeropuertos conectados grafo': None,
+                    'Rutas cargadas digrafo':  0,
+                    'Rutas cargadas grafo': 0
                     }
        
         analyzer['cities'] = m.newMap(numelements=80000,
@@ -47,6 +50,10 @@ def newAnalyzer():
                                               directed=False,
                                               size=14000,
                                               comparefunction=compareAirports)
+
+        analyzer['Tabla rutas'] = m.newMap(numelements=40000,
+                                     maptype='PROBING')   
+
         return analyzer
 
     except Exception as exp:
@@ -65,28 +72,53 @@ def addAirport(analyzer, airport):
     m.put(airports, iso, airport)  
 
 
-def addAirportsConnection(analyzer, departure, destination, distance):
-    airports = analyzer['Directed airports']
-    noDirectedAirports = analyzer['No Directed airports']
-    if gr.containsVertex(airports, departure) == False:
-        gr.insertVertex(airports, departure)
-    if gr.containsVertex(airports, destination) == False:
-        gr.insertVertex(airports, destination)   
-    if gr.getEdge(airports, destination, departure) != None:
-        gr.insertVertex(noDirectedAirports, departure)
-        gr.insertVertex(noDirectedAirports, destination)
-        gr.addEdge(noDirectedAirports, departure, destination, distance)
-                
-    gr.addEdge(airports, departure, destination, distance)
+def addAirportsDigraph(analyzer, departure, destination, distance):  
+    if gr.containsVertex(analyzer['Directed airports'], departure) == False:
+        gr.insertVertex(analyzer['Directed airports'], departure)
+    if gr.containsVertex(analyzer['Directed airports'], destination) == False:
+        gr.insertVertex(analyzer['Directed airports'], destination)
+        
+    if gr.containsVertex(analyzer['Directed airports'], departure) and gr.containsVertex(analyzer['Directed airports'], destination):
+        analyzer['Rutas cargadas digrafo'] += 1
+        if gr.getEdge(analyzer['Directed airports'], departure, destination) == None:       
+           gr.addEdge(analyzer['Directed airports'], departure, destination, distance)
+  
 
+
+def addAirportsGraph(analyzer, departure, destination, distance, aerolinea):
+    if m.get(analyzer['Tabla rutas'], destination + "_" + departure) != None:
+     bucket2 = m.get(analyzer['Tabla rutas'], destination+ "_" +departure)['value']
+     if lt.isPresent(bucket2, aerolinea):
+        analyzer['Rutas cargadas grafo'] += 1
+
+    if m.contains(analyzer['Tabla rutas'], departure + "_" + destination):
+        bucket = m.get(analyzer['Tabla rutas'], departure + "_" + destination)['value']
+        if lt.isPresent(bucket, aerolinea) == False:
+         lt.addLast(bucket, aerolinea)
+         m.put(analyzer['Tabla rutas'], departure + "_" + destination, bucket)
+
+    else:
+        bucket = lt.newList('ARRAY_LIST')
+        lt.addLast(bucket, aerolinea)
+        m.put(analyzer['Tabla rutas'], departure + "_" + destination, bucket)       
+
+    if gr.containsVertex(analyzer['No Directed airports'], departure) == False:
+        gr.insertVertex(analyzer['No Directed airports'], departure)
+    if gr.containsVertex(analyzer['No Directed airports'], destination) == False:
+        gr.insertVertex(analyzer['No Directed airports'], destination)
+
+    if gr.getEdge(analyzer['Directed airports'], destination, departure) != None: 
+        if gr.getEdge(analyzer['No Directed airports'], departure, destination) == None:
+         gr.addEdge(analyzer['No Directed airports'], departure, destination, distance)
+
+     
 def addNoconnectedAirports(analyzer):
-    airports = analyzer['airports']
-    airportsList = m.valueSet(airports)
+    airportsList = m.valueSet(analyzer['airports'])
     for airport in lt.iterator(airportsList):
       iso = airport['IATA']
       if gr.containsVertex(analyzer['Directed airports'], iso) == False:
         gr.insertVertex(analyzer['Directed airports'], iso)
-      if gr.containsVertex(analyzer['No Directed airports'], iso) == False:
+      if gr.containsVertex(analyzer['No Directed airports'], iso) == False:  
         gr.insertVertex(analyzer['No Directed airports'], iso)  
 
 # ==============================
@@ -181,14 +213,23 @@ def millasViajero(analyzer, ciudadOrigen):
     return xd
 
 def aeropuertosAfectados(analyzer, aeropuertoEliminado):
-    degreeAeropuertoDirigido = gr.outdegree(analyzer['Directed airports'], aeropuertoEliminado) + gr.indegree(analyzer['Directed airports'], aeropuertoEliminado)    
-    degreeAeropuertoNoDirigido = gr.outdegree(analyzer['No Directed airports'], aeropuertoEliminado) + gr.indegree(analyzer['No Directed airports'], aeropuertoEliminado)
+    degreeAeropuertoDirigido = 0
+    degreeAeropuertoNoDirigido = 0
+    for ruta in lt.iterator(m.keySet(analyzer['Tabla rutas'])):    
+        if aeropuertoEliminado in ruta:
+            bucketAerolineas = m.get(analyzer['Tabla rutas'], ruta)['value']
+            degreeAeropuertoDirigido += lt.size(bucketAerolineas)
+            for aerolinea in lt.iterator(bucketAerolineas):
+             rutaVuelta = ruta[4] + ruta[5] + ruta[6] + "_" + ruta[0] + ruta[1] + ruta[2]
+             if m.get(analyzer['Tabla rutas'], rutaVuelta) != None:
+                if lt.isPresent(m.get(analyzer['Tabla rutas'], rutaVuelta)['value'], aerolinea): 
+                  degreeAeropuertoNoDirigido += 0.5
 
     numAeropuertosNuevoDigrafo = gr.numVertices(analyzer['Directed airports']) - 1
     numAeropuertosNuevoGrafo = gr.numVertices(analyzer['Directed airports']) - 1
 
-    numRutasNuevoDigrafo = gr.numEdges(analyzer['Directed airports']) - degreeAeropuertoDirigido
-    numRutasNuevoGrafo = gr.numEdges(analyzer['No Directed airports']) - degreeAeropuertoNoDirigido
+    numRutasNuevoDigrafo = analyzer['Rutas cargadas digrafo'] - degreeAeropuertoDirigido
+    numRutasNuevoGrafo = analyzer['Rutas cargadas grafo'] - degreeAeropuertoNoDirigido
 
     afectados = gr.adjacents(analyzer['Directed airports'], aeropuertoEliminado)
 

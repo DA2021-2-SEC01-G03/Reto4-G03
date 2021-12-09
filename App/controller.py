@@ -44,7 +44,7 @@ def loadAirports(analyzer, airportsFile):
     return analyzer
 
 
-def loadAirportsGraphs(analyzer, routesFile):
+def loadAirportsDigraph(analyzer, routesFile):
     routesFile = cf.data_dir + routesFile
     input_file = csv.DictReader(open(routesFile, encoding="utf-8"),
                                 delimiter=",")
@@ -55,14 +55,33 @@ def loadAirportsGraphs(analyzer, routesFile):
         destination = route['Destination']
         destinationVertex = m.get(analyzer['airports'], destination)['key']
         distance = float(route['distance_km'])
-        model.addAirportsConnection(analyzer, departureVertex, destinationVertex, distance)
+        model.addAirportsDigraph(analyzer, departureVertex, destinationVertex, distance)
         aeropuertosConectados += 1
   
-    analyzer['Aeropuertos conectados grafo'] = gr.numVertices(analyzer['No Directed airports'])
     analyzer['Aeropuertos conectados digrafo'] = gr.numVertices(analyzer['Directed airports'])
 
     return analyzer
 
+
+
+def loadAirportsGraph(analyzer, routesFile):
+    routesFile = cf.data_dir + routesFile
+    input_file = csv.DictReader(open(routesFile, encoding="utf-8"),
+                                delimiter=",")
+    aeropuertosConectados = 0                            
+    for route in input_file:
+        departure = route['Departure']
+        departureVertex = m.get(analyzer['airports'], departure)['key']
+        destination = route['Destination']
+        destinationVertex = m.get(analyzer['airports'], destination)['key']
+        distance = float(route['distance_km'])
+        aerolinea = route['Airline']
+        model.addAirportsGraph(analyzer, departureVertex, destinationVertex, distance, aerolinea)
+        aeropuertosConectados += 1
+  
+    analyzer['Aeropuertos conectados grafo'] = gr.numVertices(analyzer['No Directed airports'])
+
+    return analyzer 
 
 def loadNoConnectedAirports(analyzer):
     return model.addNoconnectedAirports(analyzer)    
@@ -92,9 +111,6 @@ def aeropuertosAfectados(analyzer, aeropuertoEliminado):
 
 def sortAirportsConnections(list):
     return model.sortAirportsConnections(list)
-
-def ac(latitudCiudad, longitudCiudad, analyzer):
-    return model.aerepuertosCercanos(latitudCiudad, longitudCiudad, analyzer)  
 
 # ==============================================
 # Funciones axiliares para funciones de consulta
