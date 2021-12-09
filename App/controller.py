@@ -99,8 +99,8 @@ def cantidadClusteres(iata1, iata2, analyzer):
 def rutaMasCorta(ciudad1, ciudad2, analyzer):
     return model.rutaMasCorta(ciudad1, ciudad2, analyzer)   
 
-def millasViajero(analyzer, ciudadOrigen):
-    return model.millasViajero(analyzer, ciudadOrigen)  
+def millasViajero(analyzer):
+    return model.millasViajero(analyzer)  
 
 def aeropuertosAfectados(analyzer, aeropuertoEliminado):
     return model.aeropuertosAfectados(analyzer, aeropuertoEliminado)       

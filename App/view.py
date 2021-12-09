@@ -122,8 +122,20 @@ def optionFive(ciudad1, ciudad2, analyzer):
         print(parada)
 
 
-def optionSix(analyzer, ciudadOrigen):
-    print(controller.millasViajero(analyzer, ciudadOrigen)) 
+def optionSix(analyzer):
+    millas = float(input("Ingrese millas disponibles "))
+    kilometros = millas * 1.6
+    print("Numero posible de aeropuertos: " + str(controller.millasViajero(analyzer)[2]))
+    print("Distancia total de viajes entre aerropuertos: " + str(controller.millasViajero(analyzer)[0]))
+    print("Kilometros de viaje disponibles del pasajero: " + str(kilometros))
+    print("Detalles del viaje más largo posible: ")
+    lastEdge = lt.lastElement(controller.millasViajero(analyzer)[1])
+    for edge in lt.iterator(controller.millasViajero(analyzer)[1]):
+        if edge == lastEdge:
+            break
+        print(edge)   
+
+    print("El pasajero necesita " + str((int(controller.millasViajero(analyzer)[0]*2) - float(kilometros))/1.6) + " millas para completar el viaje")
 
 
 def optionSeven(analyzer, aeropuertoEliminado):
@@ -179,8 +191,7 @@ def thread_cycle():
             
 
         elif int(inputs[0]) == 6:
-            ciudadOrigen = input("Ingrese ciudad de origen: ")
-            optionSix(analyzer, ciudadOrigen)
+            optionSix(analyzer)
 
         elif int(inputs[0]) == 7:
             aeropuertoEliminado = input("Codigo iata aeropuerto eliminado: ")

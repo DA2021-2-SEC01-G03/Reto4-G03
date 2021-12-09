@@ -1,7 +1,7 @@
 ﻿
 from DISClib.DataStructures.arraylist import addLast
 import config
-from DISClib.ADT.graph import getEdge, gr
+from DISClib.ADT.graph import getEdge, gr, numVertices
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
 from DISClib.ADT import stack as st
@@ -9,6 +9,7 @@ from DISClib.Algorithms.Sorting import mergesort as ms
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim 
+from DISClib.Algorithms.Graphs import dfs
 from DISClib.Utils import error as error
 assert config
 import math
@@ -205,12 +206,21 @@ def rutaMasCorta(ciudad1, ciudad2, analyzer):
     return origen, destino, ruta, listaCamino, listaParadas
 
 
-def millasViajero(analyzer, ciudadOrigen):
+def millasViajero(analyzer):
     aeropuertos = analyzer['No Directed airports']
-    xd = prim.PrimMST(aeropuertos)
-    origen = prim.prim(aeropuertos, xd, ciudadOrigen)
+    Prim = prim.PrimMST(aeropuertos)
+    mst = prim.prim(aeropuertos, Prim, "LIS")
+    xd3 = mst['edgeTo']
+    distanciaEntreAeropuertos = prim.weightMST(aeropuertos, mst)
     
-    return xd
+    listaEdges = lt.newList('ARRAY_LIST')
+    prim.edgesMST(aeropuertos, mst)
+    edges = mst['mst']
+    for edge in lt.iterator(edges):
+        lt.addLast(listaEdges, edge)
+
+    return distanciaEntreAeropuertos, listaEdges, xd3['size']
+
 
 def aeropuertosAfectados(analyzer, aeropuertoEliminado):
     degreeAeropuertoDirigido = 0
@@ -273,7 +283,10 @@ def compareroutes(route1, route2):
         return -1
 
 def compareConnections(airportNumConnections1, airportNumConnections2):
-    return airportNumConnections1['numConnections'] > airportNumConnections2['numConnections']     
+    return airportNumConnections1['numConnections'] > airportNumConnections2['numConnections'] 
+
+def compareConnections2(airportNumConnections1, airportNumConnections2):
+    return airportNumConnections1 > airportNumConnections2            
 
 
 # ==============================================
